@@ -2,6 +2,7 @@ package com.imbackt.extant.game
 
 import com.imbackt.extant.engine.GameLogic
 import com.imbackt.extant.engine.Window
+import com.imbackt.extant.engine.graphics.Mesh
 import org.lwjgl.glfw.GLFW.GLFW_KEY_DOWN
 import org.lwjgl.glfw.GLFW.GLFW_KEY_UP
 
@@ -10,8 +11,28 @@ class Game : GameLogic {
     private var direction = 0
     private var color = 0f
 
+    private lateinit var mesh: Mesh
+
     override fun init() {
         renderer.init()
+        val positions = floatArrayOf(
+            -0.5f, 0.5f, 0.0f,
+            -0.5f, -0.5f, 0.0f,
+            0.5f, -0.5f, 0.0f,
+            0.5f, 0.5f, 0.0f
+        )
+        val colors = floatArrayOf(
+            0.5f, 0.0f, 0.0f,
+            0.0f, 0.5f, 0.0f,
+            0.0f, 0.0f, 0.5f,
+            0.0f, 0.5f, 0.5f
+        )
+        val indices = intArrayOf(
+            0, 1, 3,
+            3, 1, 2
+        )
+
+        mesh = Mesh(positions, colors, indices)
     }
 
     override fun input(window: Window) {
@@ -30,10 +51,11 @@ class Game : GameLogic {
 
     override fun render(window: Window) {
         window.setClearColor(color, color, color, 0.0f)
-        renderer.render(window)
+        renderer.render(window, mesh)
     }
 
     override fun cleanup() {
         renderer.cleanup()
+        mesh.cleanup()
     }
 }
