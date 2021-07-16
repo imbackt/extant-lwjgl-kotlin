@@ -76,6 +76,7 @@ class Window(
 
         // Set the clear color
         glClearColor(0f, 0f, 0f, 0f)
+        glEnable(GL_DEPTH_TEST)
     }
 
     fun setClearColor(r: Float, g: Float, b: Float, a: Float) {

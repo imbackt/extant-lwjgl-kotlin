@@ -35,6 +35,10 @@ class ShaderProgram {
         }
     }
 
+    fun setUniform(uniformName: String, value: Int) {
+        uniforms[uniformName]?.let { glUniform1i(it, value) }
+    }
+
     fun createVertexShader(shaderCode: String) {
         vertexShaderId = createShader(shaderCode, GL_VERTEX_SHADER)
     }

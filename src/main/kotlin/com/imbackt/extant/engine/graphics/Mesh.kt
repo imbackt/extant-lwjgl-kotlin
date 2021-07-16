@@ -9,49 +9,59 @@ import org.lwjgl.system.MemoryUtil
 
 class Mesh(
     positions: FloatArray,
-    colors: FloatArray,
-    indices: IntArray
+    textCoords: FloatArray,
+    indices: IntArray,
+    private val texture: Texture
 ) {
     private val vaoId by lazy { glGenVertexArrays() }
-    private val posVboId by lazy { glGenBuffers() }
-    private val colorVboId by lazy { glGenBuffers() }
-    private val idxVboId by lazy { glGenBuffers() }
+    private val vboIdList: List<Int> = ArrayList()
     private val vertexCount = indices.size
 
     init {
         glBindVertexArray(vaoId)
 
         // Position VBO
+        var vboId = glGenBuffers()
+        vboIdList.toMutableList().add(vboId)
         val posBuffer = MemoryUtil.memAllocFloat(positions.size)
         posBuffer.put(positions).flip()
-        glBindBuffer(GL_ARRAY_BUFFER, posVboId)
+        glBindBuffer(GL_ARRAY_BUFFER, vboId)
         glBufferData(GL_ARRAY_BUFFER, posBuffer, GL_STATIC_DRAW)
         glEnableVertexAttribArray(0)
         glVertexAttribPointer(0, 3, GL_FLOAT, false, 0, 0)
 
-        // Color VBO
-        val colorBuffer = MemoryUtil.memAllocFloat(colors.size)
-        colorBuffer.put(colors).flip()
-        glBindBuffer(GL_ARRAY_BUFFER, colorVboId)
-        glBufferData(GL_ARRAY_BUFFER, colorBuffer, GL_STATIC_DRAW)
+        // Texture coordinates VBO
+        vboId = glGenBuffers()
+        vboIdList.toMutableList().add(vboId)
+        val textCoordsBuffer = MemoryUtil.memAllocFloat(textCoords.size)
+        textCoordsBuffer.put(textCoords).flip()
+        glBindBuffer(GL_ARRAY_BUFFER, vboId)
+        glBufferData(GL_ARRAY_BUFFER, textCoordsBuffer, GL_STATIC_DRAW)
         glEnableVertexAttribArray(1)
-        glVertexAttribPointer(1, 3, GL_FLOAT, false, 0, 0)
+        glVertexAttribPointer(1, 2, GL_FLOAT, false, 0, 0)
 
         // Index VBO
+        vboId = glGenBuffers()
+        vboIdList.toMutableList().add(vboId)
         val indicesBuffer = MemoryUtil.memAllocInt(indices.size)
         indicesBuffer.put(indices).flip()
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, idxVboId)
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vboId)
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, indicesBuffer, GL_STATIC_DRAW)
 
         glBindBuffer(GL_ARRAY_BUFFER, 0)
         glBindVertexArray(0)
 
         MemoryUtil.memFree(posBuffer)
-        MemoryUtil.memFree(colorBuffer)
+        MemoryUtil.memFree(textCoordsBuffer)
         MemoryUtil.memFree(indicesBuffer)
     }
 
     fun render() {
+        // Activate first texture bank
+        glActiveTexture(GL_TEXTURE0)
+        // Bind the texture
+        glBindTexture(GL_TEXTURE_2D, texture.id)
+
         // Draw the mesh
         glBindVertexArray(vaoId)
 
@@ -67,9 +77,12 @@ class Mesh(
 
         // Delete the VBOs
         glBindBuffer(GL_ARRAY_BUFFER, 0)
-        GL15.glDeleteBuffers(posVboId)
-        GL15.glDeleteBuffers(colorVboId)
-        GL15.glDeleteBuffers(idxVboId)
+        vboIdList.forEach {
+            GL15.glDeleteBuffers(it)
+        }
+
+        // Delete the texture
+        texture.cleanup()
 
         // Delete the VAO
         glBindVertexArray(0)

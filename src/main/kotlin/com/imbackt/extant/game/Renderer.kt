@@ -12,15 +12,14 @@ class Renderer {
     private val shaderProgram by lazy { ShaderProgram() }
     private val transformation by lazy { Transformation() }
 
-    fun init(window: Window) {
-        shaderProgram.createVertexShader(loadResource("vertex.vsh"))
-        shaderProgram.createFragmentShader(loadResource("fragment.fsh"))
+    fun init() {
+        shaderProgram.createVertexShader(loadResource("shaders/vertex.vsh"))
+        shaderProgram.createFragmentShader(loadResource("shaders/fragment.fsh"))
         shaderProgram.link()
 
         shaderProgram.createUniform("projectionMatrix")
         shaderProgram.createUniform("worldMatrix")
-
-        window.setClearColor(0.0f, 0.0f, 0.0f, 0.0f)
+        shaderProgram.createUniform("texture_sampler")
     }
 
     private fun clear() {
@@ -42,6 +41,7 @@ class Renderer {
             transformation.getProjectionMatrix(FOV, window.width.toFloat(), window.height.toFloat(), Z_NEAR, Z_FAR)
         shaderProgram.setUniform("projectionMatrix", projectionMatrix)
 
+        shaderProgram.setUniform("texture_sampler", 0)
         // Render each gameItem
         gameItems.forEach {
             val worldMatrix = transformation.getWorldMatrix(it.position, it.rotation, it.scale)
