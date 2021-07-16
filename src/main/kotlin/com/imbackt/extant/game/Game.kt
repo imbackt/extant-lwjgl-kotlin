@@ -1,20 +1,22 @@
 package com.imbackt.extant.game
 
+import com.imbackt.extant.engine.GameItem
 import com.imbackt.extant.engine.GameLogic
 import com.imbackt.extant.engine.Window
 import com.imbackt.extant.engine.graphics.Mesh
-import org.lwjgl.glfw.GLFW.GLFW_KEY_DOWN
-import org.lwjgl.glfw.GLFW.GLFW_KEY_UP
+import org.lwjgl.glfw.GLFW.*
 
 class Game : GameLogic {
     private val renderer by lazy { Renderer() }
-    private var direction = 0
-    private var color = 0f
+    private var displayXInc = 0
+    private var displayYInc = 0
+    private var displayZInc = 0
+    private var scaleInc = 0
 
-    private lateinit var mesh: Mesh
+    private var gameItems: Array<GameItem> = emptyArray()
 
-    override fun init() {
-        renderer.init()
+    override fun init(window: Window) {
+        renderer.init(window)
         val positions = floatArrayOf(
             -0.5f, 0.5f, 0.0f,
             -0.5f, -0.5f, 0.0f,
@@ -28,34 +30,62 @@ class Game : GameLogic {
             0.0f, 0.5f, 0.5f
         )
         val indices = intArrayOf(
-            0, 1, 3,
-            3, 1, 2
+            0, 1, 3, 3, 1, 2
         )
 
-        mesh = Mesh(positions, colors, indices)
+        val mesh = Mesh(positions, colors, indices)
+        val gameItem = GameItem(mesh)
+        gameItem.setPosition(0f, 0f, -2f)
+        gameItems += gameItem
     }
 
     override fun input(window: Window) {
-        direction = when {
-            window.isKeyPressed(GLFW_KEY_UP) -> 1
-            window.isKeyPressed(GLFW_KEY_DOWN) -> -1
-            else -> 0
+        displayXInc = 0
+        displayYInc = 0
+        displayZInc = 0
+        scaleInc = 0
+
+        when {
+            window.isKeyPressed(GLFW_KEY_UP) -> displayYInc = 1
+            window.isKeyPressed(GLFW_KEY_DOWN) -> displayYInc = -1
+            window.isKeyPressed(GLFW_KEY_LEFT) -> displayXInc = -1
+            window.isKeyPressed(GLFW_KEY_RIGHT) -> displayXInc = 1
+            window.isKeyPressed(GLFW_KEY_A) -> displayZInc = -1
+            window.isKeyPressed(GLFW_KEY_Q) -> displayZInc = 1
+            window.isKeyPressed(GLFW_KEY_Z) -> scaleInc = -1
+            window.isKeyPressed(GLFW_KEY_X) -> scaleInc = 1
         }
     }
 
     override fun update(interval: Float) {
-        color += direction * 0.01f
-        if (color > 1) color = 1f
-        else if (color < 0) color = 0f
+        gameItems.forEach {
+            // Update position
+            it.setPosition(
+                it.position.x + displayXInc * 0.1f,
+                it.position.y + displayYInc * 0.1f,
+                it.position.z + displayZInc * 0.1f
+            )
+
+            // Update scale
+            it.scale = if (it.scale >= 0) it.scale + scaleInc * 0.05f else 0f
+
+            // Update rotation angle
+            it.setRotation(
+                0f,
+                0f,
+                if (it.rotation.z <= 360) it.rotation.z + 1.5f else 0f
+            )
+        }
     }
 
     override fun render(window: Window) {
-        window.setClearColor(color, color, color, 0.0f)
-        renderer.render(window, mesh)
+        renderer.render(window, gameItems)
     }
 
     override fun cleanup() {
         renderer.cleanup()
-        mesh.cleanup()
+        gameItems.forEach {
+            it.mesh.cleanup()
+        }
     }
 }

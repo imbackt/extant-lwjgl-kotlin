@@ -13,7 +13,7 @@ class GameEngine(
     override fun run() {
         try {
             init()
-            loop()
+            gameLoop()
         } catch (e: Exception) {
             e.printStackTrace()
         } finally {
@@ -24,10 +24,10 @@ class GameEngine(
     private fun init() {
         window.init()
         timer.init()
-        gameLogic.init()
+        gameLogic.init(window)
     }
 
-    private fun loop() {
+    private fun gameLoop() {
         var elapsedTime: Float
         var accumulator = 0f
         val interval = 1f / TARGET_UPS

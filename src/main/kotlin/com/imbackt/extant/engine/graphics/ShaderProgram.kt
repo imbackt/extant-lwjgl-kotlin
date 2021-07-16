@@ -1,16 +1,37 @@
 package com.imbackt.extant.engine.graphics
 
+import org.joml.Matrix4f
 import org.lwjgl.opengl.GL20.*
+import org.lwjgl.system.MemoryStack
 import kotlin.properties.Delegates
 
 class ShaderProgram {
     private val programId by lazy { glCreateProgram() }
     private var vertexShaderId by Delegates.notNull<Int>()
     private var fragmentShaderId by Delegates.notNull<Int>()
+    private val uniforms = HashMap<String, Int>()
 
     init {
         if (programId == 0) {
             throw Exception("Could not create Shader")
+        }
+    }
+
+    fun createUniform(uniformName: String) {
+        val uniformLocation = glGetUniformLocation(programId, uniformName)
+        if (uniformLocation < 0) {
+            throw Exception("Could not find uniform: $uniformName")
+        }
+        uniforms[uniformName] = uniformLocation
+    }
+
+    fun setUniform(uniformName: String, value: Matrix4f) {
+        // Dump the matrix into a float buffer
+        MemoryStack.stackPush().use { stack ->
+            glUniformMatrix4fv(
+                uniforms[uniformName]!!, false,
+                value[stack.mallocFloat(16)]
+            )
         }
     }
 

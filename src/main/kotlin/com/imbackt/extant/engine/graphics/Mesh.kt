@@ -1,5 +1,6 @@
 package com.imbackt.extant.engine.graphics
 
+import org.lwjgl.opengl.GL11.glDrawElements
 import org.lwjgl.opengl.GL15
 import org.lwjgl.opengl.GL15.glBufferData
 import org.lwjgl.opengl.GL20.glVertexAttribPointer
@@ -11,11 +12,11 @@ class Mesh(
     colors: FloatArray,
     indices: IntArray
 ) {
-    internal val vaoId by lazy { glGenVertexArrays() }
+    private val vaoId by lazy { glGenVertexArrays() }
     private val posVboId by lazy { glGenBuffers() }
     private val colorVboId by lazy { glGenBuffers() }
     private val idxVboId by lazy { glGenBuffers() }
-    internal val vertexCount = indices.size
+    private val vertexCount = indices.size
 
     init {
         glBindVertexArray(vaoId)
@@ -50,9 +51,19 @@ class Mesh(
         MemoryUtil.memFree(indicesBuffer)
     }
 
+    fun render() {
+        // Draw the mesh
+        glBindVertexArray(vaoId)
+
+        glDrawElements(GL_TRIANGLES, vertexCount, GL_UNSIGNED_INT, 0)
+
+        // Restore the state
+        glBindVertexArray(0)
+    }
+
     fun cleanup() {
         glDisableVertexAttribArray(0)
-        glDisableVertexAttribArray(1)
+        glDisableVertexAttribArray(1) //??
 
         // Delete the VBOs
         glBindBuffer(GL_ARRAY_BUFFER, 0)

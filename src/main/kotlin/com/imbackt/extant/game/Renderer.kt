@@ -1,26 +1,33 @@
 package com.imbackt.extant.game
 
+import com.imbackt.extant.engine.GameItem
 import com.imbackt.extant.engine.Window
-import com.imbackt.extant.engine.graphics.Mesh
 import com.imbackt.extant.engine.graphics.ShaderProgram
+import com.imbackt.extant.engine.graphics.Transformation
 import com.imbackt.extant.engine.loadResource
-import org.lwjgl.opengl.GL11
+import org.joml.Math
 import org.lwjgl.opengl.GL30.*
 
 class Renderer {
     private val shaderProgram by lazy { ShaderProgram() }
+    private val transformation by lazy { Transformation() }
 
-    fun init() {
+    fun init(window: Window) {
         shaderProgram.createVertexShader(loadResource("vertex.vsh"))
         shaderProgram.createFragmentShader(loadResource("fragment.fsh"))
         shaderProgram.link()
+
+        shaderProgram.createUniform("projectionMatrix")
+        shaderProgram.createUniform("worldMatrix")
+
+        window.setClearColor(0.0f, 0.0f, 0.0f, 0.0f)
     }
 
     private fun clear() {
         glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT)
     }
 
-    fun render(window: Window, mesh: Mesh) {
+    fun render(window: Window, gameItems: Array<GameItem>) {
         clear()
 
         if (window.resized) {
@@ -30,17 +37,29 @@ class Renderer {
 
         shaderProgram.bind()
 
-        // Draw the mesh
-        glBindVertexArray(mesh.vaoId)
-        GL11.glDrawElements(GL_TRIANGLES, mesh.vertexCount, GL_UNSIGNED_INT, 0)
+        // Update projection Matrix
+        val projectionMatrix =
+            transformation.getProjectionMatrix(FOV, window.width.toFloat(), window.height.toFloat(), Z_NEAR, Z_FAR)
+        shaderProgram.setUniform("projectionMatrix", projectionMatrix)
 
-        // Restore state
-        glBindVertexArray(0)
+        // Render each gameItem
+        gameItems.forEach {
+            val worldMatrix = transformation.getWorldMatrix(it.position, it.rotation, it.scale)
+            shaderProgram.setUniform("worldMatrix", worldMatrix)
+            // Render the mesh for the item
+            it.mesh.render()
+        }
 
         shaderProgram.unbind()
     }
 
     fun cleanup() {
         shaderProgram.cleanup()
+    }
+
+    companion object {
+        private val FOV = Math.toRadians(60.0f)
+        private const val Z_NEAR = 0.01f
+        private const val Z_FAR = 1000.0f
     }
 }
