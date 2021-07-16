@@ -9,6 +9,7 @@ class GameEngine(
 ) : Runnable {
     private val window by lazy { Window(windowTitle, width, height, vSync) }
     private val timer by lazy { Timer() }
+    private val mouseInput by lazy { MouseInput() }
 
     override fun run() {
         try {
@@ -24,6 +25,7 @@ class GameEngine(
     private fun init() {
         window.init()
         timer.init()
+        mouseInput.init(window)
         gameLogic.init(window)
     }
 
@@ -53,11 +55,12 @@ class GameEngine(
     }
 
     private fun input() {
-        gameLogic.input(window)
+        mouseInput.input(window)
+        gameLogic.input(window, mouseInput)
     }
 
     private fun update(interval: Float) {
-        gameLogic.update(interval)
+        gameLogic.update(interval, mouseInput)
     }
 
     private fun render() {

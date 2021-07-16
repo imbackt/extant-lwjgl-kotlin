@@ -2,17 +2,18 @@ package com.imbackt.extant.game
 
 import com.imbackt.extant.engine.GameItem
 import com.imbackt.extant.engine.GameLogic
+import com.imbackt.extant.engine.MouseInput
 import com.imbackt.extant.engine.Window
+import com.imbackt.extant.engine.graphics.Camera
 import com.imbackt.extant.engine.graphics.Mesh
 import com.imbackt.extant.engine.graphics.Texture
+import org.joml.Vector3f
 import org.lwjgl.glfw.GLFW.*
 
 class Game : GameLogic {
     private val renderer by lazy { Renderer() }
-    private var displayXInc = 0
-    private var displayYInc = 0
-    private var displayZInc = 0
-    private var scaleInc = 0
+    private val camera by lazy { Camera() }
+    private val cameraInc = Vector3f()
 
     private var gameItems: Array<GameItem> = emptyArray()
 
@@ -115,52 +116,49 @@ class Game : GameLogic {
         )
         val texture = Texture("textures/grassblock.png")
         val mesh = Mesh(positions, textCoords, indices, texture)
-        val gameItem = GameItem(mesh)
-        gameItem.setPosition(0f, 0f, -2f)
-        gameItems += gameItem
+        val gameItem1 = GameItem(mesh)
+        gameItem1.scale = 0.5f
+        gameItem1.setPosition(0f, 0f, -2f)
+        val gameItem2 = GameItem(mesh)
+        gameItem2.scale = 0.5f
+        gameItem2.setPosition(0.5f, 0.5f, -2f)
+        val gameItem3 = GameItem(mesh)
+        gameItem3.scale = 0.5f
+        gameItem3.setPosition(0.0f, 0.0f, -2.5f)
+        val gameItem4 = GameItem(mesh)
+        gameItem4.scale = 0.5f
+        gameItem4.setPosition(0.5f, 0.0f, -2.5f)
+        gameItems = arrayOf(gameItem1, gameItem2, gameItem3, gameItem4)
     }
 
-    override fun input(window: Window) {
-        displayXInc = 0
-        displayYInc = 0
-        displayZInc = 0
-        scaleInc = 0
-
+    override fun input(window: Window, mouseInput: MouseInput) {
+        cameraInc.set(0f, 0f, 0f)
         when {
-            window.isKeyPressed(GLFW_KEY_UP) -> displayYInc = 1
-            window.isKeyPressed(GLFW_KEY_DOWN) -> displayYInc = -1
-            window.isKeyPressed(GLFW_KEY_LEFT) -> displayXInc = -1
-            window.isKeyPressed(GLFW_KEY_RIGHT) -> displayXInc = 1
-            window.isKeyPressed(GLFW_KEY_A) -> displayZInc = -1
-            window.isKeyPressed(GLFW_KEY_Q) -> displayZInc = 1
-            window.isKeyPressed(GLFW_KEY_Z) -> scaleInc = -1
-            window.isKeyPressed(GLFW_KEY_X) -> scaleInc = 1
+            window.isKeyPressed(GLFW_KEY_W) -> cameraInc.z = -1f
+            window.isKeyPressed(GLFW_KEY_S) -> cameraInc.z = 1f
+            window.isKeyPressed(GLFW_KEY_A) -> cameraInc.x = -1f
+            window.isKeyPressed(GLFW_KEY_D) -> cameraInc.x = 1f
+            window.isKeyPressed(GLFW_KEY_Z) -> cameraInc.y = -1f
+            window.isKeyPressed(GLFW_KEY_X) -> cameraInc.y = 1f
         }
     }
 
-    override fun update(interval: Float) {
-        gameItems.forEach {
-            // Update position
-            it.setPosition(
-                it.position.x + displayXInc * 0.1f,
-                it.position.y + displayYInc * 0.1f,
-                it.position.z + displayZInc * 0.1f
-            )
+    override fun update(interval: Float, mouseInput: MouseInput) {
+        // Update camera position
+        camera.movePosition(cameraInc.x * CAMERA_POS_STEP, cameraInc.y * CAMERA_POS_STEP, cameraInc.z * CAMERA_POS_STEP)
 
-            // Update scale
-            it.scale = if (it.scale >= 0) it.scale + scaleInc * 0.05f else 0f
-
-            // Update rotation angle
-            it.setRotation(
-                if (it.rotation.x <= 360) it.rotation.z + 1.5f else 0f,
-                if (it.rotation.y <= 360) it.rotation.z + 1.5f else 0f,
-                if (it.rotation.z <= 360) it.rotation.z + 1.5f else 0f
+        // Update camera based on mouse
+        if (mouseInput.rightButtonPressed) {
+            camera.moveRotation(
+                mouseInput.displayVec.x * MOUSE_SENSITIVITY,
+                mouseInput.displayVec.y * MOUSE_SENSITIVITY,
+                0f
             )
         }
     }
 
     override fun render(window: Window) {
-        renderer.render(window, gameItems)
+        renderer.render(window, camera, gameItems)
     }
 
     override fun cleanup() {
@@ -168,5 +166,10 @@ class Game : GameLogic {
         gameItems.forEach {
             it.mesh.cleanup()
         }
+    }
+
+    companion object {
+        const val CAMERA_POS_STEP = 0.05f
+        const val MOUSE_SENSITIVITY = 0.2f
     }
 }

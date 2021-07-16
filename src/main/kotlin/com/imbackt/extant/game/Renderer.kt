@@ -2,6 +2,7 @@ package com.imbackt.extant.game
 
 import com.imbackt.extant.engine.GameItem
 import com.imbackt.extant.engine.Window
+import com.imbackt.extant.engine.graphics.Camera
 import com.imbackt.extant.engine.graphics.ShaderProgram
 import com.imbackt.extant.engine.graphics.Transformation
 import com.imbackt.extant.engine.loadResource
@@ -18,7 +19,7 @@ class Renderer {
         shaderProgram.link()
 
         shaderProgram.createUniform("projectionMatrix")
-        shaderProgram.createUniform("worldMatrix")
+        shaderProgram.createUniform("modelViewMatrix")
         shaderProgram.createUniform("texture_sampler")
     }
 
@@ -26,7 +27,7 @@ class Renderer {
         glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT)
     }
 
-    fun render(window: Window, gameItems: Array<GameItem>) {
+    fun render(window: Window, camera: Camera, gameItems: Array<GameItem>) {
         clear()
 
         if (window.resized) {
@@ -41,11 +42,15 @@ class Renderer {
             transformation.getProjectionMatrix(FOV, window.width.toFloat(), window.height.toFloat(), Z_NEAR, Z_FAR)
         shaderProgram.setUniform("projectionMatrix", projectionMatrix)
 
+        // Update viewMatrix
+        val viewMatrix = transformation.getViewMatrix(camera)
+
         shaderProgram.setUniform("texture_sampler", 0)
         // Render each gameItem
         gameItems.forEach {
-            val worldMatrix = transformation.getWorldMatrix(it.position, it.rotation, it.scale)
-            shaderProgram.setUniform("worldMatrix", worldMatrix)
+            // Set model view matrix for this item
+            val modelViewMatrix = transformation.getModelViewMatrix(it, viewMatrix)
+            shaderProgram.setUniform("modelViewMatrix", modelViewMatrix)
             // Render the mesh for the item
             it.mesh.render()
         }

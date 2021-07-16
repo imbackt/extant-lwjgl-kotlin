@@ -2,7 +2,7 @@ package com.imbackt.extant.engine
 
 import org.lwjgl.glfw.GLFW.*
 import org.lwjgl.glfw.GLFWErrorCallback
-import org.lwjgl.opengl.GL
+import org.lwjgl.opengl.GL.createCapabilities
 import org.lwjgl.opengl.GL11.*
 import org.lwjgl.system.MemoryUtil.NULL
 
@@ -12,7 +12,7 @@ class Window(
     internal var height: Int,
     internal val vSync: Boolean
 ) {
-    private val windowHandle by lazy { glfwCreateWindow(width, height, title, NULL, NULL) }
+    internal val windowHandle by lazy { glfwCreateWindow(width, height, title, NULL, NULL) }
     internal var resized = false
 
     fun init() {
@@ -72,15 +72,15 @@ class Window(
         // Make  the window visible
         glfwShowWindow(windowHandle)
 
-        GL.createCapabilities()
+        createCapabilities()
 
         // Set the clear color
         glClearColor(0f, 0f, 0f, 0f)
         glEnable(GL_DEPTH_TEST)
     }
 
-    fun setClearColor(r: Float, g: Float, b: Float, a: Float) {
-        glClearColor(r, g, b, a)
+    fun setClearColor(red: Float, green: Float, blue: Float, alpha: Float) {
+        glClearColor(red, green, blue, alpha)
     }
 
     fun isKeyPressed(keyCode: Int): Boolean {
